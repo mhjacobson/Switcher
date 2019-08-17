@@ -60,8 +60,12 @@ static BOOL _showsApplicationName;
         [selectedApplication activateWithOptions:(NSApplicationActivateAllWindows | NSApplicationActivateIgnoringOtherApps)];
 
         if (modifierFlags == NSEventModifierFlagOption) {
+            // Hide others after a delay to avoid racing with the activation of the selected application.  Otherwise, we might accidentally unhide the Finder (which is unhidden when the only unhidden application becomes hidden).
+            // Synchronous sleep (instead of perform-after-delay) to eliminate the possibility that we race ourselves and hide something we just activated.
+            usleep(USEC_PER_SEC / 4);
+
             for (NSRunningApplication *application in [[NSWorkspace sharedWorkspace] runningApplications]) {
-                if (![application isEqual:selectedApplication]) {
+                if ([self showsApplication:application] && ![application isEqual:selectedApplication]) {
                     [application hide];
                 }
             }
