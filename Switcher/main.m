@@ -10,6 +10,7 @@
 #import <Foundation/Foundation.h>
 #import <dispatch/dispatch.h>
 #import <assert.h>
+#import "NSBundle+SwitcherLoginItems.h"
 
 @interface Switcher : NSObject
 @end
@@ -87,7 +88,7 @@ static BOOL _showsApplicationName;
 
     // Add the new item above the separator.
     NSMenu *const menu = [[self statusItem] menu];
-    [menu insertItem:menuItem atIndex:([menu numberOfItems] - 3)];
+    [menu insertItem:menuItem atIndex:([menu numberOfItems] - 5)];
 }
 
 + (nullable NSMenuItem *)menuItemForApplication:(NSRunningApplication *)application {
@@ -175,6 +176,14 @@ static NSString *const showsApplicationNameKey = @"showsApplicationName";
     [self updateTitle];
 }
 
++ (BOOL)isLoginItem {
+    return [[NSBundle mainBundle] switcher_isLoginItem];
+}
+
++ (void)setLoginItem:(BOOL)loginItem {
+    [[NSBundle mainBundle] switcher_setLoginItem:loginItem];
+}
+
 + (NSStatusItem *)statusItem {
     static dispatch_once_t once;
     static NSStatusItem *statusItem;
@@ -192,12 +201,20 @@ static NSString *const showsApplicationNameKey = @"showsApplicationName";
         [button setImagePosition:NSImageLeading];
 
         NSMenu *const menu = [[NSMenu alloc] init];
+        
         [menu addItem:[NSMenuItem separatorItem]];
 
         NSMenuItem *const showApplicationNameItem = [[NSMenuItem alloc] init];
         [showApplicationNameItem setTitle:@"Show App Name"];
         [showApplicationNameItem bind:NSValueBinding toObject:self withKeyPath:@"showsApplicationName" options:nil];
         [menu addItem:showApplicationNameItem];
+
+        NSMenuItem *const runAtLoginItem = [[NSMenuItem alloc] init];
+        [runAtLoginItem setTitle:@"Run at Login"];
+        [runAtLoginItem bind:NSValueBinding toObject:self withKeyPath:@"loginItem" options:nil];
+        [menu addItem:runAtLoginItem];
+
+        [menu addItem:[NSMenuItem separatorItem]];
 
         NSMenuItem *const quitItem = [[NSMenuItem alloc] init];
         [quitItem setTitle:@"Quit Switcher"];
