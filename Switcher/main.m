@@ -50,17 +50,23 @@ static BOOL _showsApplicationName;
 
     const id representedObject = [menuItem representedObject];
     assert([representedObject isKindOfClass:[NSRunningApplication self]]);
-    NSRunningApplication *const runningApplication = (NSRunningApplication *)representedObject;
+    NSRunningApplication *const selectedApplication = (NSRunningApplication *)representedObject;
 
-#if 1
-    [runningApplication activateWithOptions:(NSApplicationActivateAllWindows | NSApplicationActivateIgnoringOtherApps)];
-#else
-    NSAppleEventDescriptor *const applicationDescriptor = [NSAppleEventDescriptor descriptorWithProcessIdentifier:[runningApplication processIdentifier]];
+    const NSEventModifierFlags modifierFlags = [NSEvent modifierFlags];
 
-    NSAppleEventDescriptor *const activateEventDescriptor = [NSAppleEventDescriptor appleEventWithEventClass:'misc' eventID:'actv' targetDescriptor:applicationDescriptor returnID:kAutoGenerateReturnID transactionID:kAnyTransactionID];
+    if (modifierFlags == NSEventModifierFlagCommand) {
+        [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[[selectedApplication bundleURL]]];
+    } else {
+        [selectedApplication activateWithOptions:(NSApplicationActivateAllWindows | NSApplicationActivateIgnoringOtherApps)];
 
-    [activateEventDescriptor sendEventWithOptions:NSAppleEventSendNoReply timeout:10. error:NULL];
-#endif
+        if (modifierFlags == NSEventModifierFlagOption) {
+            for (NSRunningApplication *application in [[NSWorkspace sharedWorkspace] runningApplications]) {
+                if (![application isEqual:selectedApplication]) {
+                    [application hide];
+                }
+            }
+        }
+    }
 }
 
 + (void)addMenuItemForApplication:(NSRunningApplication *)application {
